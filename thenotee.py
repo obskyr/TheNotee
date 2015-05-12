@@ -21,9 +21,9 @@ def doIt():
     yetee = Yetee()
 
     title = "New shirt{} on The Yetee!".format(
-        "s" if len(yetee.shirts) != 1 else "s"
+        "s" if len(yetee.shirts) != 1 else ""
     )
-    body = " and ".join(["Onett Road", "Distorting Phase"])
+    body = " and ".join(shirt.name for shirt in yetee.shirts)
     body += "." if yetee.shirts and yetee.shirts[-1].name[-1] not in ".!?" \
         else ""
 
