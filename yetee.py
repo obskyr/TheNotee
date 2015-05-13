@@ -57,6 +57,7 @@ def parseContinueShirts(soup, siteUrl, price):
     return shirts
 
 def parseTime(soup):
+    """Return the time the Yetee deal in `soup` ends as `(year, month, day)`."""
     onload = soup.find('body')['onload']
     # There's no easy way to parse time as CST specifically, sadly.
     # Especially not with DST factoring in...
@@ -66,6 +67,12 @@ def parseTime(soup):
     return t
 
 class Yetee(object):
+    """A Yetee campaign. Properties include:
+    * shirts - A list of the campaign's shirts (as Shirt objects).
+    * ends - The time the campaign ends, as `(year, month, day)`.
+    * yesterday - Only if there is a Continue at the moment of this
+    campaign. If so, a Yetee object for that campaign.
+    """
     def __init__(self, isContinue=False):
         if not isContinue:
             siteUrl = "http://theyetee.com/"
@@ -95,6 +102,12 @@ class Yetee(object):
 
 
 class Shirt(object):
+    """A Yetee shirt. Properties include:
+    * name - The name of the shirt.
+    * author - The name of the shirt's author.
+    * price - The price of the shirt in USD.
+    * images - A list of URLs to the shirt's images.
+    """
     def __init__(self, name, author, price, images):
         self.name   = name
         self.author = author
