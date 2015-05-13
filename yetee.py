@@ -74,7 +74,12 @@ class Yetee(object):
     campaign. If so, a Yetee object for that campaign.
     """
     def __init__(self, isContinue=False):
-        if not isContinue:
+        self.isContinue = isContinue
+        self.update()
+
+    def update(self):
+        """Update to the latest campaign."""
+        if not self.isContinue:
             siteUrl = "http://theyetee.com/"
             def getPrice(soup):
                 rightDiv = soup.find(class_='divShirtRight')
@@ -97,9 +102,8 @@ class Yetee(object):
         self.ends = parseTime(soup)
         self.shirts = shirtParser(soup, siteUrl, price)
 
-        if not isContinue:
+        if not self.isContinue:
             self.yesterday = Yetee(isContinue=True)
-
 
 class Shirt(object):
     """A Yetee shirt. Properties include:
