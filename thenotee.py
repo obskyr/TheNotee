@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 from pushbullet import Pushbullet
 from yetee import Yetee
 
@@ -15,8 +16,25 @@ def doIt():
             "key in a file called pushbullet.auth."
         print "You can find it at https://www.pushbullet.com/account."
         return
+    
+    try:
+        channelTag = sys.argv[1]
+    except IndexError:
+        channelTag = None
 
     pb = Pushbullet(auth)
+
+    if channelTag is not None:
+        for channel in pb.channels:
+            if channel.channel_tag == channelTag:
+                pusher = channel
+                break
+        else:
+            print "You don't own a channel with the tag @{}.".format(
+                channelTag)
+            return
+    else:
+        pusher = pb
 
     yetee = Yetee()
 
@@ -27,7 +45,7 @@ def doIt():
     body += "." if yetee.shirts and yetee.shirts[-1].name[-1] not in ".!?" \
         else ""
 
-    pb.push_link(
+    pusher.push_link(
         title,
         "http://theyetee.com/",
         body

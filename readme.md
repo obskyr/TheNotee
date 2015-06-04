@@ -8,9 +8,17 @@ The Notee is a program to send you notifications for new Yetee shirts. It's easi
 
 It's quite easy once you've installed the [requirements](#requirements).
 
+```
+# Push to your Pushbullet:
+python thenotee.py
+
+# Push to the channel @yetee that you own:
+python thenotee.py yetee
+```
+
 First, create a file named `pushbullet.auth` in the `thenotee.py` directory. In this file, put your Pushbullet API key (can be found on [your account page](https://www.pushbullet.com/account) - it'll look like a bunch of random numbers and letters, something like `bQxB6NcyQYNnSqxntrKmIdTey3Y31mGp`), and save the file. Of course, you will only have to do this once.
 
-Then just run `thenotee.py`, and you will get a notification containing the current shirts. Schedule `thenotee.py` to run every day using your operating system's task scheduler ([cron](http://en.wikipedia.org/wiki/Cron) on Linux and OS X, [Windows Task Scheduler](http://en.wikipedia.org/wiki/Windows_Task_Scheduler) on Windows), and you're all done!
+Then just run `thenotee.py`, and you will get a notification containing the current shirts. You can also push to a specific channel by providing the channel tag as argument to `thenotee.py`. Schedule `thenotee.py` to run every day using your operating system's task scheduler ([cron](http://en.wikipedia.org/wiki/Cron) on Linux and OS X, [Windows Task Scheduler](http://en.wikipedia.org/wiki/Windows_Task_Scheduler) on Windows), and you're all done!
 
 ## Requirements
 
