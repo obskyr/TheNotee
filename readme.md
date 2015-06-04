@@ -2,7 +2,7 @@
 
 The Notee is a program to send you notifications for new Yetee shirts. It's easily scheduled, and lets you throw away remembering to check every day!
 
-You can subscribe to [the Yetee Pushbullet channel](https://www.pushbullet.com/my-channel?tag=yetee) with a single click, and start receiving notifications about new shirts immediately.
+You can subscribe to [the Yetee Pushbullet channel](https://www.pushbullet.com/channel?tag=yetee) with a single click, and start receiving notifications about new shirts immediately.
 
 ![](http://i.imgur.com/RSsHKtM.png?1)
 
