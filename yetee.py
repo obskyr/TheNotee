@@ -105,6 +105,9 @@ class Yetee(object):
 
         if not self.isContinue:
             self.yesterday = Yetee(isContinue=True)
+    
+    def timeLeft(self):
+        return self.ends - time.time()
 
 class Shirt(object):
     """A Yetee shirt. Properties include:
