@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 
 # Powered by the Katamari Forever soundtrack, mostly.
+# Rewrite also powered by the very same! Thought it was only right.
 
 import re
 import requests
+import time
+from calendar import timegm # seriously what why
 from urlparse import urljoin
 from bs4 import BeautifulSoup
 
@@ -15,61 +18,73 @@ def getSoup(url):
 # arbitrarily structured, this ain't going to look good.
 # But that's how it is, isn't it?
 
-imgUrlRe = re.compile(r"url\([\"\'](.+?)[\"\']\);")
+imgUrlRe = re.compile(r"url\((.+?)\);")
+priceRe = re.compile(r"\$([0-9.]+)")
 
-def parseShirt(topDiv, infoDiv, siteUrl, price):
-    name = infoDiv.find('h2').get_text().strip()
-    # Empty names sometimes become "\xa0".
-    if name in [u"No Shirt Available", u"\xa0", u""]:
+def parseShirt(featuredTeeDiv, infoDiv):
+    name = infoDiv.find(class_='title').get_text().strip()
+    author = infoDiv.find(class_='artist-info').find(
+        class_='artist').get_text().strip()
+    
+    # If it's like the old site, the following might be '' or '\xa0'
+    # sometimes. Don't know if the new site does that, though.
+    # If problems spring up where nonexistent shirts show up, this may
+    # be the source - just switch out for "if name in [...]".
+    if name == 'No Shirt Available':
         return None
-    author = infoDiv.get_text().split('\n')[2].strip()[3:]
-    imgs = topDiv(class_="imgTeeImage")
+    
+    imgs = featuredTeeDiv.find(class_='cycle-slideshow')(class_='img')
     imgUrls = []
     for img in imgs:
         imgUrl = img['style']
-        imgUrl = urljoin(siteUrl, imgUrlRe.search(imgUrl).group(1))
+        imgUrl = imgUrlRe.search(imgUrl).group(1)
         imgUrls.append(imgUrl)
+
+    buyButton = featuredTeeDiv.find('button', class_='btn')
+    price = float(priceRe.search(buyButton.get_text()).group(1))
 
     shirt = Shirt(name, author, price, imgUrls)
     return shirt
 
-def parseShirts(soup, siteUrl, price):
+def parseShirts(soup, siteUrl):
     shirts = []
-    for topDiv in \
-    soup.find(class_='divShirtLeftTop')('div', recursive=False):
-        infoDiv = topDiv.find(class_='divVContainer').find('div')
-        shirt = parseShirt(topDiv, infoDiv, siteUrl, price)
-        if shirt is not None:
-            shirts.append(shirt)
-    return shirts
-
-def parseContinueShirts(soup, siteUrl, price):
-    shirts = []
-    for topDiv in soup.find(
-        class_='divShirtLeftBottom'
-    )(
-        'div', class_='divVContainer', recursive=False
+    containerDiv = soup.find(class_='todays-tees')
+    for featuredTeeDiv, infoDiv in zip(
+        containerDiv(class_='featured-tee'),
+        containerDiv(class_='featured-artist')
     ):
-        infoDiv = topDiv.find('div')
-        shirt = parseShirt(topDiv, infoDiv, siteUrl, price)
-        if shirt is not None:
-            shirts.append(shirt)
+        curShirt = parseShirt(featuredTeeDiv, infoDiv)
+        if curShirt is not None:
+            shirts.append(curShirt)
     return shirts
 
 def parseTime(soup):
-    """Return the time the Yetee deal in `soup` ends as `(year, month, day)`."""
-    onload = soup.find('body')['onload']
-    # There's no easy way to parse time as CST specifically, sadly.
-    # Especially not with DST factoring in...
-    timeRe = re.compile(r"^countdown\(([0-9]+),([0-9]+),([0-9]+)\);$")
-    t = timeRe.search(onload).groups()
-    t = tuple(int(unit) for unit in t) if int(t[0]) else None
-    return t
+    """Return the time the Yetee deal in `soup` ends as Unix seconds."""
+    endTime = soup.find(class_='countdown')['data-end']
+    if not endTime:
+        return None
+    
+    # Don't want to have to mess with locale-dependent month names.
+    months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec')
+    endTime = str(months.index(endTime[:3]) + 1).zfill(2) + endTime[3:]
+    
+    #...And don't want to have to mess with timezone names.
+    offsets = {
+        'CDT': -5,
+        'CST': -6
+    }
+    offset = offsets[endTime[-3:]] * 60 * 60
+    endTime = endTime[:-3] + 'UTC'
+    
+    endTime = time.strptime(endTime, '%m %d %Y %H:%M:%S %Z')
+    endTime = timegm(endTime) - offset
+    return endTime
 
 class Yetee(object):
     """A Yetee campaign. Properties include:
     * shirts - A list of the campaign's shirts (as Shirt objects).
-    * ends - The time the campaign ends, as `(year, month, day)`.
+    * ends - The time the campaign ends, as Unix seconds.
     * yesterday - Only if there is a Continue at the moment of this
     campaign. If so, a Yetee object for that campaign.
     """
@@ -81,26 +96,12 @@ class Yetee(object):
         """Update to the latest campaign."""
         if not self.isContinue:
             siteUrl = "http://theyetee.com/"
-            def getPrice(soup):
-                rightDiv = soup.find(class_='divShirtRight')
-                price = int(
-                    rightDiv.find(
-                        class_='divShirtPrice'
-                    ).get_text(strip=True)[1:]
-                )
-                return price
-            shirtParser = parseShirts
         else:
             siteUrl = "http://theyetee.com/continue.php"
-            def getPrice(soup):
-                # At the moment, $13 seems to be the only option for Continue.
-                return 13
-            shirtParser = parseContinueShirts
 
         soup = getSoup(siteUrl)
-        price = getPrice(soup)
         self.ends = parseTime(soup)
-        self.shirts = shirtParser(soup, siteUrl, price)
+        self.shirts = parseShirts(soup, siteUrl)
 
         if not self.isContinue:
             self.yesterday = Yetee(isContinue=True)
@@ -117,7 +118,10 @@ class Shirt(object):
         self.author = author
         self.price  = price
         self.images = images
-
+        # Description of the shirt is currently not in.
+        # The shirt's detail page has to be loaded for that, and
+        # loading more pages doesn't feel worth it.
+        
     def __repr__(self):
         return "{} by {} ({}, {} images)".format(
             self.name, self.author, '$' + str(self.price), len(self.images)
