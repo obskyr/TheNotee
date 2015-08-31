@@ -21,8 +21,7 @@ def getSoup(url):
 imgUrlRe = re.compile(r"url\((.+?)\);")
 priceRe = re.compile(r"\$([0-9.]+)")
 
-def parseShirt(featuredTeeDiv, infoDiv):
-    name = infoDiv.find(class_='title').get_text().strip()
+def parseShirt(featuredTeeDiv, infoDiv, name):
     author = infoDiv.find(class_='artist-info').find(
         class_='artist').get_text().strip()
     
@@ -47,13 +46,23 @@ def parseShirt(featuredTeeDiv, infoDiv):
     return shirt
 
 def parseShirts(soup, siteUrl):
-    shirts = []
     containerDiv = soup.find(class_='todays-tees')
-    for featuredTeeDiv, infoDiv in zip(
+
+    infoDivs = []
+    names = []
+    for infoDiv in containerDiv(class_='featured-artist'):
+        for i, name in enumerate(infoDiv.find(
+            class_='title').stripped_strings):
+            infoDivs.append(infoDiv)
+            names.append(name if i == 0 else name[2:])
+
+    shirts = []
+    for featuredTeeDiv, infoDiv, name in zip(
         containerDiv(class_='featured-tee'),
-        containerDiv(class_='featured-artist')
+        infoDivs,
+        names
     ):
-        curShirt = parseShirt(featuredTeeDiv, infoDiv)
+        curShirt = parseShirt(featuredTeeDiv, infoDiv, name)
         if curShirt is not None:
             shirts.append(curShirt)
     return shirts
