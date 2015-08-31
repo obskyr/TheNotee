@@ -66,7 +66,7 @@ def parseTime(soup):
     
     # Don't want to have to mess with locale-dependent month names.
     months = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec')
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
     endTime = str(months.index(endTime[:3]) + 1).zfill(2) + endTime[3:]
     
     #...And don't want to have to mess with timezone names.
