@@ -12,7 +12,7 @@ from urlparse import urljoin
 from bs4 import BeautifulSoup
 
 def getSoup(url):
-    return BeautifulSoup(requests.get(url).text)
+    return BeautifulSoup(requests.get(url).content, 'html.parser')
 
 # Note: HTML parsing code incoming. Seeing as HTML pages are always so
 # arbitrarily structured, this ain't going to look good.
