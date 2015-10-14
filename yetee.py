@@ -81,10 +81,13 @@ def parseTime(soup):
     #...And don't want to have to mess with timezone names.
     offsets = {
         'CDT': -5,
-        'CST': -6
+        'CST': -6,
+        # This following one has only appeared once: 2015-10-14. Hmm.
+        'America/Chicago': -5 # Only correct 50% of the time... I think.
     }
-    offset = offsets[endTime[-3:]] * 60 * 60
-    endTime = endTime[:-3] + 'UTC'
+    timezoneIndex = endTime.rfind(" ") + 1
+    offset = offsets[endTime[timezoneIndex:]] * 60 * 60
+    endTime = endTime[:timezoneIndex] + 'UTC'
     
     endTime = time.strptime(endTime, '%m %d %Y %H:%M:%S %Z')
     endTime = timegm(endTime) - offset
